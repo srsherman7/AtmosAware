@@ -86,6 +86,12 @@ AtmosAware/
             ├── login.html
             └── register.html
 ```
+## Screen Shots
+<img width="1759" height="891" alt="image" src="https://github.com/user-attachments/assets/7f86cc2d-82ce-4196-bd72-6690661f9bbe" />
+<img width="1127" height="789" alt="image" src="https://github.com/user-attachments/assets/22036ab1-53a0-412c-8e05-d8fca8f10290" />
+<img width="622" height="852" alt="image" src="https://github.com/user-attachments/assets/9fb8d804-1a01-4557-9ad5-dc6212657709" />
+
+
 
 ## Future Plans
 
