@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+{% block title %}AtmosAware - Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+    }
+
+    .settings-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-card h2 {
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-check input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+    }
+
+    .form-check label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .settings-submit {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+
+    #location-map {
+        width: 100%;
+        height: 300px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    /* Location Search */
+    .location-search {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .location-search input {
+        flex: 1;
+        padding: 0.7rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .location-search input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .location-search button {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .search-results {
+        margin-bottom: 1rem;
+    }
+
+    .search-result-item {
+        padding: 0.6rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-bottom: 0.4rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .search-result-item:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .search-result-item .result-detail {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.2rem;
+    }
+
+    .geolocation-btn {
+        width: 100%;
+        padding: 0.7rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .or-divider {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin: 0.75rem 0;
+        position: relative;
+    }
+
+    .or-divider::before,
+    .or-divider::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: var(--border);
+    }
+
+    .or-divider::before { left: 0; }
+    .or-divider::after { right: 0; }
+
+    .map-instruction {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    /* Saved Locations */
+    .locations-list {
+        margin-top: 1rem;
+    }
+
+    .location-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .location-item.primary {
+        border-color: var(--accent);
+    }
+
+    .location-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .location-info .name {
+        font-weight: 500;
+    }
+
+    .location-info .coords {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .location-info .primary-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        background: rgba(0, 180, 216, 0.15);
+        color: var(--accent);
+        border-radius: 10px;
+    }
+
+    .location-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .location-actions button {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+
+    .location-actions button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .location-actions button.delete-btn:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+    .add-location-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        align-items: end;
+    }
+
+    .add-location-form input {
+        padding: 0.6rem 0.8rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+
+    .add-location-form input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .add-location-form button {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    /* Notification toggle */
+    .notification-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .notification-section .info h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-section .info p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .toggle-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    #geo-status {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Notification Settings -->
+    <div class="settings-card">
+        <h2>Notifications</h2>
+        <div class="notification-section">
+            <div class="info">
+                <h4>Browser Push Notifications</h4>
+                <p>Get alerted for severe weather in your area</p>
+            </div>
+            <button id="notification-toggle" class="btn btn-outline toggle-btn">Enable</button>
+        </div>
+        <div id="notification-status" style="font-size: 0.8rem; color: var(--text-secondary);"></div>
+    </div>
+
+    <!-- Unit Preferences -->
+    <div class="settings-card">
+        <h2>Units & Preferences</h2>
+        <form method="POST" action="{{ url_for('main.settings') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label for="temp_unit">Temperature</label>
+                    <select id="temp_unit" name="temp_unit">
+                        <option value="fahrenheit" {{ 'selected' if current_user.temp_unit == 'fahrenheit' else '' }}>Fahrenheit (&deg;F)</option>
+                        <option value="celsius" {{ 'selected' if current_user.temp_unit == 'celsius' else '' }}>Celsius (&deg;C)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="wind_unit">Wind Speed</label>
+                    <select id="wind_unit" name="wind_unit">
+                        <option value="mph" {{ 'selected' if current_user.wind_unit == 'mph' else '' }}>mph</option>
+                        <option value="kmh" {{ 'selected' if current_user.wind_unit == 'kmh' else '' }}>km/h</option>
+                        <option value="ms" {{ 'selected' if current_user.wind_unit == 'ms' else '' }}>m/s</option>
+                        <option value="kn" {{ 'selected' if current_user.wind_unit == 'kn' else '' }}>knots</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="precip_unit">Precipitation</label>
+                    <select id="precip_unit" name="precip_unit">
+                        <option value="inch" {{ 'selected' if current_user.precip_unit == 'inch' else '' }}>inches</option>
+                        <option value="mm" {{ 'selected' if current_user.precip_unit == 'mm' else '' }}>mm</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" id="alerts_enabled" name="alerts_enabled"
+                       {{ 'checked' if current_user.alerts_enabled else '' }}>
+                <label for="alerts_enabled">Enable weather alerts on dashboard</label>
+            </div>
+
+            <!-- Hidden fields for location (preserved from current) -->
+            <input type="hidden" name="lat" value="{{ current_user.default_lat }}">
+            <input type="hidden" name="lon" value="{{ current_user.default_lon }}">
+            <input type="hidden" name="location_name" value="{{ current_user.default_location_name }}">
+
+            <button type="submit" class="btn btn-primary settings-submit">Save Preferences</button>
+        </form>
+    </div>
+
+    <!-- Location Settings -->
+    <div class="settings-card">
+        <h2>Set Your Location</h2>
+
+        <!-- Browser Geolocation -->
+        <button id="use-my-location" class="btn btn-outline geolocation-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+            </svg>
+            Use My Current Location
+        </button>
+        <div id="geo-status"></div>
+
+        <div class="or-divider">or search</div>
+
+        <!-- Zip Code / City Search -->
+        <div class="location-search">
+            <input type="text" id="location-query" placeholder="Enter zip code, city name, or address...">
+            <button class="btn btn-primary" id="search-location-btn">Search</button>
+        </div>
+        <div id="search-results" class="search-results"></div>
+
+        <div class="or-divider">or click the map</div>
+
+        <!-- Map -->
+        <p class="map-instruction">Click anywhere on the map to set your exact location</p>
+        <div id="location-map"></div>
+
+        <form method="POST" action="{{ url_for('main.settings') }}" id="location-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="temp_unit" value="{{ current_user.temp_unit }}">
+            <input type="hidden" name="wind_unit" value="{{ current_user.wind_unit }}">
+            <input type="hidden" name="precip_unit" value="{{ current_user.precip_unit }}">
+            <input type="hidden" name="alerts_enabled" value="{{ 'on' if current_user.alerts_enabled else '' }}">
+
+            <div class="form-group">
+                <label for="location_name">Location Name</label>
+                <input type="text" id="location_name" name="location_name"
+                       value="{{ current_user.default_location_name }}"
+                       placeholder="e.g. New York, NY">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="lat">Latitude</label>
+                    <input type="number" id="lat" name="lat" step="0.0001"
+                           value="{{ current_user.default_lat }}" min="-90" max="90">
+                </div>
+                <div class="form-group">
+                    <label for="lon">Longitude</label>
+                    <input type="number" id="lon" name="lon" step="0.0001"
+                           value="{{ current_user.default_lon }}" min="-180" max="180">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary settings-submit">Save Location</button>
+        </form>
+    </div>
+
+    <!-- Saved Locations -->
+    <div class="settings-card">
+        <h2>Saved Locations</h2>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Save multiple locations to quickly switch between them on the dashboard.
+        </p>
+
+        <div id="locations-list" class="locations-list">
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">Loading...</p>
+        </div>
+
+        <div class="add-location-form">
+            <input type="text" id="new-loc-name" placeholder="Location name">
+            <input type="number" id="new-loc-lat" placeholder="Lat" step="0.0001">
+            <input type="number" id="new-loc-lon" placeholder="Lon" step="0.0001">
+            <button class="btn btn-primary" id="add-location-btn">Add</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/notifications.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // ===== MAP =====
+    const lat = parseFloat(document.getElementById('lat').value) || 39.8283;
+    const lon = parseFloat(document.getElementById('lon').value) || -98.5795;
+
+    const map = L.map('location-map').setView([lat, lon], 10);
+
+    // Use OpenStreetMap tiles (reliable, always works)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    let marker = L.marker([lat, lon]).addTo(map);
+
+    function updateMapLocation(newLat, newLon, name) {
+        marker.setLatLng([newLat, newLon]);
+        map.setView([newLat, newLon], 12);
+        document.getElementById('lat').value = newLat.toFixed(4);
+        document.getElementById('lon').value = newLon.toFixed(4);
+        if (name) {
+            document.getElementById('location_name').value = name;
+        }
+    }
+
+    map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+        updateMapLocation(lat, lng, null);
+    });
+
+    // ===== BROWSER GEOLOCATION =====
+    document.getElementById('use-my-location').addEventListener('click', () => {
+        const status = document.getElementById('geo-status');
+
+        if (!navigator.geolocation) {
+            status.textContent = 'Geolocation is not supported by your browser.';
+            status.style.color = 'var(--danger)';
+            return;
+        }
+
+        status.textContent = 'Detecting your location...';
+        status.style.color = 'var(--accent)';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                updateMapLocation(lat, lon, 'My Location');
+                status.textContent = `Location detected: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                status.style.color = 'var(--success)';
+            },
+            (error) => {
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        status.textContent = 'Location access denied. Please allow location access in your browser settings.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        status.textContent = 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        status.textContent = 'Location request timed out.';
+                        break;
+                    default:
+                        status.textContent = 'An unknown error occurred.';
+                }
+                status.style.color = 'var(--danger)';
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    });
+
+    // ===== LOCATION SEARCH (ZIP CODE / CITY) =====
+    const searchInput = document.getElementById('location-query');
+    const searchBtn = document.getElementById('search-location-btn');
+    const resultsContainer = document.getElementById('search-results');
+
+    async function searchLocation() {
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        resultsContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">Searching...</p>';
+
+        try {
+            const resp = await fetch(`/api/weather/geocode?q=${encodeURIComponent(query)}`);
+            const data = await resp.json();
+
+            if (data.results && data.results.length > 0) {
+                resultsContainer.innerHTML = data.results.map(r => {
+                    const display = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
+                    return `
+                        <div class="search-result-item" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${display}">
+                            <div>${display}</div>
+                            <div class="result-detail">${r.lat.toFixed(4)}, ${r.lon.toFixed(4)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Add click handlers
+                resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const lat = parseFloat(item.dataset.lat);
+                        const lon = parseFloat(item.dataset.lon);
+                        const name = item.dataset.name;
+                        updateMapLocation(lat, lon, name);
+                        resultsContainer.innerHTML = '';
+                        searchInput.value = '';
+                    });
+                });
+            } else {
+                resultsContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">No results found. Try a different search term.</p>';
+            }
+        } catch (err) {
+            resultsContainer.innerHTML = '<p style="color: var(--danger); font-size: 0.85rem;">Search failed. Please try again.</p>';
+        }
+    }
+
+    searchBtn.addEventListener('click', searchLocation);
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchLocation();
+        }
+    });
+
+    // ===== NOTIFICATIONS =====
+    const notifBtn = document.getElementById('notification-toggle');
+    const notifStatus = document.getElementById('notification-status');
+    const notifications = new WeatherNotifications();
+
+    async function initNotifications() {
+        const supported = await notifications.init();
+        if (!supported) {
+            notifBtn.textContent = 'Not Supported';
+            notifBtn.disabled = true;
+            notifStatus.textContent = 'Your browser does not support notifications.';
+            return;
+        }
+
+        if (Notification.permission === 'granted') {
+            notifBtn.textContent = 'Enabled';
+            notifBtn.classList.remove('btn-outline');
+            notifBtn.classList.add('btn-primary');
+            notifStatus.textContent = 'You will receive alerts for severe weather.';
+        } else if (Notification.permission === 'denied') {
+            notifBtn.textContent = 'Blocked';
+            notifBtn.disabled = true;
+            notifStatus.textContent = 'Notifications are blocked. Please enable them in browser settings.';
+        }
+    }
+
+    notifBtn.addEventListener('click', async () => {
+        const granted = await notifications.requestPermission();
+        if (granted) {
+            notifBtn.textContent = 'Enabled';
+            notifBtn.classList.remove('btn-outline');
+            notifBtn.classList.add('btn-primary');
+            notifStatus.textContent = 'Notifications enabled!';
+        } else {
+            notifStatus.textContent = 'Permission denied. You can change this in browser settings.';
+        }
+    });
+
+    initNotifications();
+
+    // ===== SAVED LOCATIONS =====
+    async function loadLocations() {
+        try {
+            const resp = await fetch('/api/locations/');
+            const data = await resp.json();
+            renderLocations(data.locations || []);
+        } catch (err) {
+            document.getElementById('locations-list').innerHTML =
+                '<p style="color: var(--text-secondary);">Failed to load locations.</p>';
+        }
+    }
+
+    function renderLocations(locations) {
+        const container = document.getElementById('locations-list');
+        if (locations.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">No saved locations yet.</p>';
+            return;
+        }
+
+        container.innerHTML = locations.map(loc => `
+            <div class="location-item ${loc.is_primary ? 'primary' : ''}">
+                <div class="location-info">
+                    <span class="name">${loc.name}</span>
+                    <span class="coords">(${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)})</span>
+                    ${loc.is_primary ? '<span class="primary-badge">PRIMARY</span>' : ''}
+                </div>
+                <div class="location-actions">
+                    ${!loc.is_primary ? `<button onclick="setPrimary(${loc.id})">Set Primary</button>` : ''}
+                    <button class="delete-btn" onclick="deleteLocation(${loc.id})">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('add-location-btn').addEventListener('click', async () => {
+        const name = document.getElementById('new-loc-name').value.trim();
+        const lat = parseFloat(document.getElementById('new-loc-lat').value);
+        const lon = parseFloat(document.getElementById('new-loc-lon').value);
+
+        if (!name || isNaN(lat) || isNaN(lon)) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        try {
+            const resp = await fetch('/api/locations/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, lat, lon })
+            });
+            if (resp.ok) {
+                document.getElementById('new-loc-name').value = '';
+                document.getElementById('new-loc-lat').value = '';
+                document.getElementById('new-loc-lon').value = '';
+                loadLocations();
+            }
+        } catch (err) {
+            console.error('Add location failed:', err);
+        }
+    });
+
+    window.setPrimary = async function(id) {
+        try {
+            await fetch(`/api/locations/${id}/primary`, { method: 'POST' });
+            loadLocations();
+        } catch (err) {
+            console.error('Set primary failed:', err);
+        }
+    };
+
+    window.deleteLocation = async function(id) {
+        if (!confirm('Delete this location?')) return;
+        try {
+            await fetch(`/api/locations/${id}`, { method: 'DELETE' });
+            loadLocations();
+        } catch (err) {
+            console.error('Delete failed:', err);
+        }
+    };
+
+    loadLocations();
+});
+</script>
+{% endblock %}

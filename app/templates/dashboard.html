@@ -1,0 +1,1308 @@
+{% extends "base.html" %}
+{% block title %}AtmosAware - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1.5rem;
+        padding: 1.5rem 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .panel-header h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .panel-header .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        background: rgba(0, 180, 216, 0.15);
+        color: var(--accent);
+    }
+
+    /* Location Switcher */
+    .location-bar {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1.25rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+
+    .location-bar label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    .location-bar select {
+        flex: 1;
+        max-width: 300px;
+        padding: 0.5rem 0.8rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .location-bar select:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .location-bar .current-loc {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Radar Map */
+    .radar-panel {
+        grid-column: 1 / -1;
+        min-height: 450px;
+    }
+
+    #radar-map {
+        width: 100%;
+        height: 400px;
+        border-radius: 8px;
+        z-index: 1;
+    }
+
+    .radar-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.75rem;
+    }
+
+    .radar-controls button {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+
+    .radar-controls button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .radar-controls .timestamp {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    /* Current Weather */
+    .current-weather {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .current-temp {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+    }
+
+    .current-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .detail-item {
+        font-size: 0.85rem;
+    }
+
+    .detail-item .label {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-item .value {
+        font-weight: 600;
+        margin-top: 0.2rem;
+    }
+
+    /* Forecast Chart */
+    .forecast-panel canvas {
+        max-height: 250px;
+    }
+
+    /* Alerts */
+    .alerts-panel {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .alert-item {
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid;
+    }
+
+    .alert-extreme {
+        background: rgba(230, 57, 70, 0.1);
+        border-color: var(--danger);
+    }
+
+    .alert-severe {
+        background: rgba(244, 162, 97, 0.1);
+        border-color: var(--warning);
+    }
+
+    .alert-moderate {
+        background: rgba(0, 180, 216, 0.1);
+        border-color: var(--accent);
+    }
+
+    .alert-minor {
+        background: rgba(46, 196, 182, 0.1);
+        border-color: var(--success);
+    }
+
+    .alert-item h4 {
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .alert-item p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+
+    .no-alerts {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+
+    /* History Panel */
+    .history-panel {
+        grid-column: 1 / -1;
+    }
+
+    .history-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .history-controls input[type="date"] {
+        padding: 0.5rem 0.8rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+
+    .history-controls input[type="date"]:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .history-controls button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .history-controls label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    #history-chart {
+        max-height: 300px;
+    }
+
+    /* Tabs */
+    .tab-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 1rem;
+    }
+
+    .tab-bar button {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab-bar button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    .tab-bar button:hover {
+        color: var(--text-primary);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard {
+            grid-template-columns: 1fr;
+        }
+        .location-bar {
+            flex-wrap: wrap;
+        }
+    }
+
+    /* Drag and Drop & Resize */
+    .widget {
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .widget.size-full {
+        grid-column: 1 / -1;
+    }
+
+    .widget.size-half {
+        grid-column: span 1;
+    }
+
+    .widget.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+        box-shadow: 0 10px 40px rgba(0, 180, 216, 0.2);
+    }
+
+    .widget.drag-over {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .drag-handle {
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        user-select: none;
+        flex: 1;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .drag-handle .grip-icon {
+        color: var(--text-secondary);
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+
+    .widget:hover .drag-handle .grip-icon {
+        opacity: 1;
+    }
+
+    .widget-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .size-toggle {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .widget:hover .size-toggle {
+        opacity: 1;
+    }
+
+    .size-toggle button {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        padding: 4px 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+    }
+
+    .size-toggle button:hover {
+        color: var(--text-primary);
+    }
+
+    .size-toggle button.active {
+        background: var(--accent);
+        color: #fff;
+    }
+
+    @media (max-width: 900px) {
+        .widget.size-half {
+            grid-column: 1 / -1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard" id="dashboard-grid">
+    <!-- Location Switcher (not draggable, always on top) -->
+    <div class="location-bar">
+        <label for="location-select">Location:</label>
+        <select id="location-select">
+            <option value="{{ lat }},{{ lon }}">{{ location_name }}</option>
+        </select>
+        <span class="current-loc" id="current-coords">{{ lat }}, {{ lon }}</span>
+    </div>
+
+    <!-- Alerts Panel -->
+    <div class="panel alerts-panel widget size-full" data-widget-id="alerts" draggable="true">
+        <div class="panel-header">
+            <div class="drag-handle">
+                <svg class="grip-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
+                <h2>Weather Alerts</h2>
+            </div>
+            <div class="widget-controls">
+                <div class="size-toggle">
+                    <button class="size-btn" data-size="half" title="Half width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>
+                    <button class="size-btn active" data-size="full" title="Full width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg></button>
+                </div>
+                <span class="badge" id="alert-count">0</span>
+            </div>
+        </div>
+        <div id="alerts-container" class="loading">Checking for alerts...</div>
+    </div>
+
+    <!-- Radar Map Panel -->
+    <div class="panel radar-panel widget size-full" data-widget-id="radar" draggable="true">
+        <div class="panel-header">
+            <div class="drag-handle">
+                <svg class="grip-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
+                <h2>Live Doppler Radar</h2>
+            </div>
+            <div class="widget-controls">
+                <div class="size-toggle">
+                    <button class="size-btn" data-size="half" title="Half width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>
+                    <button class="size-btn active" data-size="full" title="Full width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg></button>
+                </div>
+                <span class="badge">LIVE</span>
+            </div>
+        </div>
+        <div id="radar-map"></div>
+        <div class="radar-controls">
+            <button id="radar-prev" aria-label="Previous frame">&laquo; Prev</button>
+            <button id="radar-play" aria-label="Play animation">&#9654; Play</button>
+            <button id="radar-next" aria-label="Next frame">Next &raquo;</button>
+            <span class="timestamp" id="radar-timestamp">Loading...</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem;font-size:0.75rem;color:var(--text-secondary);">
+            <span>Intensity:</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:12px;height:12px;background:#00ff00;border-radius:2px;display:inline-block;"></span> Light</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:12px;height:12px;background:#ffff00;border-radius:2px;display:inline-block;"></span> Moderate</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:12px;height:12px;background:#ff8800;border-radius:2px;display:inline-block;"></span> Heavy</span>
+            <span style="display:inline-flex;align-items:center;gap:0.25rem;"><span style="width:12px;height:12px;background:#ff0000;border-radius:2px;display:inline-block;"></span> Extreme</span>
+            <span style="margin-left:auto;font-style:italic;">Clear = no precipitation in view</span>
+        </div>
+    </div>
+
+    <!-- Current Conditions -->
+    <div class="panel widget size-half" data-widget-id="current" draggable="true">
+        <div class="panel-header">
+            <div class="drag-handle">
+                <svg class="grip-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
+                <h2>Current Conditions</h2>
+            </div>
+            <div class="widget-controls">
+                <div class="size-toggle">
+                    <button class="size-btn active" data-size="half" title="Half width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>
+                    <button class="size-btn" data-size="full" title="Full width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg></button>
+                </div>
+                <span class="badge" id="location-badge">{{ location_name }}</span>
+            </div>
+        </div>
+        <div id="current-weather" class="loading">Loading weather data...</div>
+    </div>
+
+    <!-- Forecast Panel with Tabs -->
+    <div class="panel widget size-full" data-widget-id="forecast" draggable="true">
+        <div class="panel-header">
+            <div class="drag-handle">
+                <svg class="grip-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
+                <h2>Forecast</h2>
+            </div>
+            <div class="widget-controls">
+                <div class="size-toggle">
+                    <button class="size-btn" data-size="half" title="Half width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg></button>
+                    <button class="size-btn active" data-size="full" title="Full width"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/></svg></button>
+                </div>
+            </div>
+        </div>
+        <div class="tab-bar">
+            <button class="active" data-tab="daily">7-Day Forecast</button>
+            <button data-tab="hourly">Hourly</button>
+            <button data-tab="history">Historical</button>
+        </div>
+
+        <div class="tab-content active" id="tab-daily">
+            <canvas id="forecast-chart"></canvas>
+        </div>
+
+        <div class="tab-content" id="tab-hourly">
+            <canvas id="hourly-chart"></canvas>
+        </div>
+
+        <div class="tab-content" id="tab-history">
+            <div class="history-controls">
+                <label for="history-start">From:</label>
+                <input type="date" id="history-start">
+                <label for="history-end">To:</label>
+                <input type="date" id="history-end">
+                <button class="btn btn-primary" id="load-history">Load History</button>
+            </div>
+            <canvas id="history-chart"></canvas>
+            <p id="history-status" style="text-align:center; color: var(--text-secondary); font-size: 0.85rem;"></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/notifications.js"></script>
+<script>
+let LAT = {{ lat }};
+let LON = {{ lon }};
+let weatherUnits = {};
+
+// ============ TABS ============
+document.querySelectorAll('.tab-bar button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    });
+});
+
+// ============ LOCATION SWITCHER ============
+async function loadSavedLocations() {
+    try {
+        const resp = await fetch('/api/locations/');
+        const data = await resp.json();
+        const select = document.getElementById('location-select');
+
+        // Keep the default option
+        const defaultOpt = select.options[0];
+
+        select.innerHTML = '';
+        select.appendChild(defaultOpt);
+
+        if (data.locations) {
+            data.locations.forEach(loc => {
+                if (`${loc.lat},${loc.lon}` !== `${defaultOpt.value}`) {
+                    const opt = document.createElement('option');
+                    opt.value = `${loc.lat},${loc.lon}`;
+                    opt.textContent = loc.name;
+                    select.appendChild(opt);
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Failed to load locations:', err);
+    }
+}
+
+document.getElementById('location-select').addEventListener('change', function() {
+    const [lat, lon] = this.value.split(',').map(Number);
+    LAT = lat;
+    LON = lon;
+    document.getElementById('current-coords').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    document.getElementById('location-badge').textContent = this.options[this.selectedIndex].text;
+
+    // Reload all data
+    loadWeatherData();
+    loadAlerts();
+    radarMap.setView([LAT, LON], 7);
+});
+
+// ============ RADAR MAP ============
+let radarMap, radarLayer, radarFrames = [], currentFrame = 0, playing = false, playInterval;
+
+function initRadarMap() {
+    radarMap = L.map('radar-map').setView([LAT, LON], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(radarMap);
+
+    L.circleMarker([LAT, LON], {
+        radius: 8,
+        fillColor: '#00b4d8',
+        color: '#fff',
+        weight: 2,
+        fillOpacity: 0.8
+    }).addTo(radarMap);
+
+    loadRadarData();
+}
+
+async function loadRadarData() {
+    try {
+        const resp = await fetch('/api/weather/radar');
+        const data = await resp.json();
+
+        if (data.radar && data.radar.past) {
+            radarFrames = data.radar.past.map(frame => ({
+                path: frame.path,
+                time: new Date(frame.time * 1000)
+            }));
+
+            if (data.radar.nowcast) {
+                data.radar.nowcast.forEach(frame => {
+                    radarFrames.push({
+                        path: frame.path,
+                        time: new Date(frame.time * 1000),
+                        nowcast: true
+                    });
+                });
+            }
+
+            currentFrame = radarFrames.length - 1;
+            showRadarFrame(currentFrame);
+        }
+    } catch (err) {
+        console.error('Radar load error:', err);
+    }
+}
+
+function showRadarFrame(index) {
+    if (radarLayer) radarMap.removeLayer(radarLayer);
+
+    const frame = radarFrames[index];
+    if (!frame) return;
+
+    const tileUrl = `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/4/1_1.png`;
+    radarLayer = L.tileLayer(tileUrl, {
+        opacity: 0.7,
+        zIndex: 10,
+        tileSize: 256,
+        maxNativeZoom: 7,
+        maxZoom: 19
+    }).addTo(radarMap);
+
+    const timeStr = frame.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const label = frame.nowcast ? `${timeStr} (forecast)` : timeStr;
+    document.getElementById('radar-timestamp').textContent = `${label} \u2022 Radar active`;
+}
+
+document.getElementById('radar-prev').addEventListener('click', () => {
+    if (currentFrame > 0) { currentFrame--; showRadarFrame(currentFrame); }
+});
+document.getElementById('radar-next').addEventListener('click', () => {
+    if (currentFrame < radarFrames.length - 1) { currentFrame++; showRadarFrame(currentFrame); }
+});
+document.getElementById('radar-play').addEventListener('click', () => {
+    if (playing) {
+        clearInterval(playInterval);
+        playing = false;
+        document.getElementById('radar-play').innerHTML = '&#9654; Play';
+    } else {
+        playing = true;
+        document.getElementById('radar-play').innerHTML = '&#9724; Stop';
+        playInterval = setInterval(() => {
+            currentFrame = (currentFrame + 1) % radarFrames.length;
+            showRadarFrame(currentFrame);
+        }, 500);
+    }
+});
+
+// ============ WEATHER DATA ============
+const WMO_CODES = {
+    0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+    45: 'Foggy', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle',
+    55: 'Dense drizzle', 61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+    71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow', 77: 'Snow grains',
+    80: 'Slight showers', 81: 'Moderate showers', 82: 'Violent showers',
+    85: 'Slight snow showers', 86: 'Heavy snow showers',
+    95: 'Thunderstorm', 96: 'Thunderstorm w/ hail', 99: 'Severe thunderstorm'
+};
+
+let forecastChart = null, hourlyChart = null;
+
+async function loadWeatherData() {
+    try {
+        const resp = await fetch(`/api/weather/forecast?lat=${LAT}&lon=${LON}`);
+        const data = await resp.json();
+
+        if (data.error) {
+            document.getElementById('current-weather').innerHTML = `<p>Error: ${data.error}</p>`;
+            return;
+        }
+
+        weatherUnits = data.units || { temperature: '\u00b0F', wind: 'mph', precipitation: 'inch' };
+        renderCurrentWeather(data.current);
+        renderForecastChart(data.daily);
+        renderHourlyChart(data.hourly);
+    } catch (err) {
+        document.getElementById('current-weather').innerHTML = `<p>Failed to load weather data.</p>`;
+    }
+}
+
+function renderCurrentWeather(current) {
+    const weatherDesc = WMO_CODES[current.weather_code] || 'Unknown';
+    const tempUnit = weatherUnits.temperature || '\u00b0F';
+    const windUnit = weatherUnits.wind || 'mph';
+    const precipUnit = weatherUnits.precipitation || 'inch';
+
+    document.getElementById('current-weather').innerHTML = `
+        <div class="current-weather">
+            <div class="current-temp">${Math.round(current.temperature_2m)}${tempUnit}</div>
+            <div>
+                <div style="font-size: 1.1rem; margin-bottom: 0.5rem;">${weatherDesc}</div>
+                <div class="current-details">
+                    <div class="detail-item">
+                        <div class="label">Feels Like</div>
+                        <div class="value">${Math.round(current.apparent_temperature)}${tempUnit}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Humidity</div>
+                        <div class="value">${current.relative_humidity_2m}%</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Wind</div>
+                        <div class="value">${Math.round(current.wind_speed_10m)} ${windUnit}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Precipitation</div>
+                        <div class="value">${current.precipitation} ${precipUnit}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderForecastChart(daily) {
+    const ctx = document.getElementById('forecast-chart').getContext('2d');
+    const labels = daily.time.map(d => {
+        const date = new Date(d + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+
+    if (forecastChart) forecastChart.destroy();
+
+    forecastChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'High',
+                    data: daily.temperature_2m_max,
+                    backgroundColor: 'rgba(230, 57, 70, 0.6)',
+                    borderColor: '#e63946',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Low',
+                    data: daily.temperature_2m_min,
+                    backgroundColor: 'rgba(0, 180, 216, 0.6)',
+                    borderColor: '#00b4d8',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#8ba4b8' } } },
+            scales: {
+                x: { ticks: { color: '#8ba4b8' }, grid: { color: 'rgba(42, 64, 85, 0.5)' } },
+                y: { ticks: { color: '#8ba4b8', callback: v => v + (weatherUnits.temperature || '\u00b0F') }, grid: { color: 'rgba(42, 64, 85, 0.5)' } }
+            }
+        }
+    });
+}
+
+function renderHourlyChart(hourly) {
+    const ctx = document.getElementById('hourly-chart').getContext('2d');
+    const labels = hourly.time.slice(0, 24).map(t => {
+        const date = new Date(t);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric' });
+    });
+
+    if (hourlyChart) hourlyChart.destroy();
+
+    const tempUnit = weatherUnits.temperature || '\u00b0F';
+    const windUnit = weatherUnits.wind || 'mph';
+
+    hourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: `Temperature (${tempUnit})`,
+                    data: hourly.temperature_2m.slice(0, 24),
+                    borderColor: '#00b4d8',
+                    backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 2,
+                    yAxisID: 'y',
+                },
+                {
+                    label: `Feels Like (${tempUnit})`,
+                    data: hourly.apparent_temperature.slice(0, 24),
+                    borderColor: '#8ba4b8',
+                    borderDash: [4, 4],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'Precip Chance (%)',
+                    data: hourly.precipitation_probability.slice(0, 24),
+                    borderColor: '#2ec4b6',
+                    backgroundColor: 'rgba(46, 196, 182, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'yPercent',
+                },
+                {
+                    label: `Wind (${windUnit})`,
+                    data: hourly.wind_speed_10m.slice(0, 24),
+                    borderColor: '#f4a261',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'yWind',
+                },
+                {
+                    label: 'Humidity (%)',
+                    data: hourly.relative_humidity_2m.slice(0, 24),
+                    borderColor: '#a78bfa',
+                    borderDash: [2, 2],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'yPercent',
+                    hidden: true,
+                },
+                {
+                    label: 'UV Index',
+                    data: hourly.uv_index.slice(0, 24),
+                    borderColor: '#e63946',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'yUV',
+                    hidden: true,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    labels: { color: '#8ba4b8', usePointStyle: true, pointStyle: 'line' },
+                    onClick: function(e, legendItem, legend) {
+                        // Default toggle behavior
+                        const index = legendItem.datasetIndex;
+                        const ci = legend.chart;
+                        const meta = ci.getDatasetMeta(index);
+                        meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                        ci.update();
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            label += Math.round(context.parsed.y * 10) / 10;
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#8ba4b8', maxTicksLimit: 12 },
+                    grid: { color: 'rgba(42, 64, 85, 0.5)' }
+                },
+                y: {
+                    position: 'left',
+                    title: { display: true, text: `Temp (${tempUnit})`, color: '#8ba4b8' },
+                    ticks: { color: '#8ba4b8' },
+                    grid: { color: 'rgba(42, 64, 85, 0.5)' }
+                },
+                yPercent: {
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    title: { display: true, text: '%', color: '#2ec4b6' },
+                    ticks: { color: '#2ec4b6' },
+                    grid: { display: false }
+                },
+                yWind: {
+                    display: false,
+                    min: 0,
+                },
+                yUV: {
+                    display: false,
+                    min: 0,
+                    max: 12,
+                }
+            }
+        }
+    });
+}
+
+// ============ ALERTS ============
+let knownAlertIds = new Set();
+
+async function loadAlerts() {
+    try {
+        const resp = await fetch(`/api/weather/alerts?lat=${LAT}&lon=${LON}`);
+        const data = await resp.json();
+
+        const container = document.getElementById('alerts-container');
+        const countBadge = document.getElementById('alert-count');
+
+        if (data.alerts && data.alerts.length > 0) {
+            countBadge.textContent = data.alerts.length;
+            countBadge.style.background = 'rgba(230, 57, 70, 0.2)';
+            countBadge.style.color = 'var(--danger)';
+            container.innerHTML = data.alerts.map(alert => {
+                const severity = (alert.severity || 'minor').toLowerCase();
+                return `
+                    <div class="alert-item alert-${severity}">
+                        <h4>${alert.event || 'Weather Alert'}</h4>
+                        <p>${alert.headline || alert.description || 'No details available.'}</p>
+                        ${alert.expires ? `<p style="margin-top:0.3rem;font-size:0.75rem;">Expires: ${new Date(alert.expires).toLocaleString()}</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Push browser notifications for new alerts
+            data.alerts.forEach(alert => {
+                const alertId = `${alert.event}-${alert.onset || alert.headline || ''}`;
+                if (!knownAlertIds.has(alertId)) {
+                    knownAlertIds.add(alertId);
+                    pushAlertNotification(alert);
+                }
+            });
+
+            // Keep set from growing forever
+            if (knownAlertIds.size > 100) {
+                const arr = Array.from(knownAlertIds);
+                knownAlertIds = new Set(arr.slice(-50));
+            }
+        } else {
+            countBadge.textContent = '0';
+            container.innerHTML = '<div class="no-alerts">No active weather alerts for your area.</div>';
+        }
+    } catch (err) {
+        document.getElementById('alerts-container').innerHTML = '<div class="no-alerts">Unable to load alerts.</div>';
+    }
+}
+
+function pushAlertNotification(alert) {
+    if (Notification.permission !== 'granted') return;
+
+    const severityEmoji = {
+        'Extreme': '\u{1F6A8}',
+        'Severe': '\u{26A0}\u{FE0F}',
+        'Moderate': '\u{1F4A7}',
+        'Minor': '\u{2139}\u{FE0F}'
+    };
+
+    const emoji = severityEmoji[alert.severity] || '\u{1F321}\u{FE0F}';
+    const title = `${emoji} ${alert.event || 'Weather Alert'}`;
+    const body = (alert.headline || alert.description || 'New weather alert in your area.').substring(0, 200);
+
+    try {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: body,
+                    icon: '/static/icons/icon-192.png',
+                    badge: '/static/icons/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    tag: `alert-${alert.event}`,
+                    renotify: true,
+                    data: { url: '/dashboard' }
+                });
+            });
+        } else {
+            new Notification(title, {
+                body: body,
+                icon: '/static/icons/icon-192.png'
+            });
+        }
+    } catch (err) {
+        console.error('Notification failed:', err);
+    }
+}
+
+// ============ HISTORICAL DATA ============
+let historyChart = null;
+
+// Set default date range (last 30 days)
+const today = new Date();
+const thirtyDaysAgo = new Date(today);
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+document.getElementById('history-end').value = today.toISOString().split('T')[0];
+document.getElementById('history-start').value = thirtyDaysAgo.toISOString().split('T')[0];
+
+document.getElementById('load-history').addEventListener('click', loadHistoricalData);
+
+async function loadHistoricalData() {
+    const startDate = document.getElementById('history-start').value;
+    const endDate = document.getElementById('history-end').value;
+    const status = document.getElementById('history-status');
+
+    if (!startDate || !endDate) {
+        status.textContent = 'Please select both start and end dates.';
+        return;
+    }
+
+    status.textContent = 'Loading historical data...';
+
+    try {
+        const resp = await fetch(`/api/weather/history?lat=${LAT}&lon=${LON}&start_date=${startDate}&end_date=${endDate}`);
+        const data = await resp.json();
+
+        if (data.error) {
+            status.textContent = `Error: ${data.error}`;
+            return;
+        }
+
+        renderHistoryChart(data);
+        status.textContent = '';
+    } catch (err) {
+        status.textContent = 'Failed to load historical data.';
+    }
+}
+
+function renderHistoryChart(data) {
+    const ctx = document.getElementById('history-chart').getContext('2d');
+    const daily = data.daily;
+    const units = data.units_display || weatherUnits;
+
+    const labels = daily.time.map(d => {
+        const date = new Date(d + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    if (historyChart) historyChart.destroy();
+
+    historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'High',
+                    data: daily.temperature_2m_max,
+                    borderColor: '#e63946',
+                    backgroundColor: 'rgba(230, 57, 70, 0.1)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 1,
+                },
+                {
+                    label: 'Low',
+                    data: daily.temperature_2m_min,
+                    borderColor: '#00b4d8',
+                    backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 1,
+                },
+                {
+                    label: 'Precipitation',
+                    data: daily.precipitation_sum,
+                    borderColor: '#2ec4b6',
+                    backgroundColor: 'rgba(46, 196, 182, 0.2)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    yAxisID: 'y1',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#8ba4b8' } } },
+            scales: {
+                x: { ticks: { color: '#8ba4b8', maxTicksLimit: 15 }, grid: { color: 'rgba(42, 64, 85, 0.5)' } },
+                y: {
+                    position: 'left',
+                    ticks: { color: '#8ba4b8', callback: v => v + (units.temperature || '\u00b0F') },
+                    grid: { color: 'rgba(42, 64, 85, 0.5)' }
+                },
+                y1: {
+                    position: 'right',
+                    ticks: { color: '#2ec4b6', callback: v => v + ' ' + (units.precipitation || 'in') },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+// ============ NOTIFICATIONS ============
+const notifications = new WeatherNotifications();
+
+async function initNotifications() {
+    const supported = await notifications.init();
+    if (!supported) return;
+
+    // Auto-request permission if not yet decided
+    if (Notification.permission === 'default') {
+        const granted = await Notification.requestPermission();
+        if (granted !== 'granted') return;
+    }
+
+    if (Notification.permission === 'granted') {
+        console.log('AtmosAware: Browser notifications enabled');
+    }
+}
+
+// ============ DRAG AND DROP ============
+let draggedWidget = null;
+
+function initDragAndDrop() {
+    const grid = document.getElementById('dashboard-grid');
+    const widgets = grid.querySelectorAll('.widget');
+
+    widgets.forEach(widget => {
+        widget.addEventListener('dragstart', handleDragStart);
+        widget.addEventListener('dragend', handleDragEnd);
+        widget.addEventListener('dragover', handleDragOver);
+        widget.addEventListener('dragenter', handleDragEnter);
+        widget.addEventListener('dragleave', handleDragLeave);
+        widget.addEventListener('drop', handleDrop);
+    });
+
+    // Size toggle buttons
+    grid.querySelectorAll('.size-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const widget = this.closest('.widget');
+            const size = this.dataset.size;
+
+            // Update CSS class
+            widget.classList.remove('size-full', 'size-half');
+            widget.classList.add(`size-${size}`);
+
+            // Update active button state
+            widget.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Invalidate radar map if resized
+            setTimeout(() => {
+                if (radarMap) radarMap.invalidateSize();
+            }, 100);
+
+            saveLayout();
+        });
+    });
+}
+
+function handleDragStart(e) {
+    draggedWidget = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.widgetId);
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.widget').forEach(w => w.classList.remove('drag-over'));
+    draggedWidget = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    if (this !== draggedWidget) {
+        this.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (this === draggedWidget) return;
+
+    const grid = document.getElementById('dashboard-grid');
+    const allWidgets = [...grid.querySelectorAll('.widget')];
+    const draggedIdx = allWidgets.indexOf(draggedWidget);
+    const droppedIdx = allWidgets.indexOf(this);
+
+    if (draggedIdx < droppedIdx) {
+        this.parentNode.insertBefore(draggedWidget, this.nextSibling);
+    } else {
+        this.parentNode.insertBefore(draggedWidget, this);
+    }
+
+    // Invalidate radar map size after reorder
+    setTimeout(() => {
+        if (radarMap) radarMap.invalidateSize();
+    }, 100);
+
+    saveLayout();
+}
+
+function getWidgetSize(widget) {
+    if (widget.classList.contains('size-half')) return 'half';
+    return 'full';
+}
+
+function saveLayout() {
+    const grid = document.getElementById('dashboard-grid');
+    const widgets = [...grid.querySelectorAll('.widget')];
+    const layout = widgets.map(w => ({
+        id: w.dataset.widgetId,
+        size: getWidgetSize(w)
+    }));
+
+    fetch('/api/layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: layout })
+    }).catch(err => console.error('Layout save failed:', err));
+}
+
+function restoreLayout() {
+    const savedLayout = '{{ dashboard_layout }}'.replace(/&#34;/g, '"').replace(/&#39;/g, "'");
+    if (!savedLayout) return;
+
+    try {
+        const layout = JSON.parse(savedLayout);
+        if (!Array.isArray(layout) || layout.length === 0) return;
+
+        const grid = document.getElementById('dashboard-grid');
+
+        layout.forEach(item => {
+            // Support both old format (string array) and new format (object array)
+            const widgetId = typeof item === 'string' ? item : item.id;
+            const size = typeof item === 'string' ? null : item.size;
+
+            const widget = grid.querySelector(`[data-widget-id="${widgetId}"]`);
+            if (widget) {
+                grid.appendChild(widget);
+
+                if (size) {
+                    widget.classList.remove('size-full', 'size-half');
+                    widget.classList.add(`size-${size}`);
+                    // Update toggle button state
+                    widget.querySelectorAll('.size-btn').forEach(b => {
+                        b.classList.toggle('active', b.dataset.size === size);
+                    });
+                }
+            }
+        });
+    } catch (err) {
+        // Invalid layout JSON, ignore
+    }
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    restoreLayout();
+    initDragAndDrop();
+    initNotifications();
+    initRadarMap();
+    loadWeatherData();
+    loadAlerts();
+    loadSavedLocations();
+
+    // Auto-refresh
+    setInterval(loadWeatherData, 5 * 60 * 1000);
+    setInterval(loadAlerts, 60 * 1000);
+    setInterval(loadRadarData, 5 * 60 * 1000);
+});
+</script>
+{% endblock %}

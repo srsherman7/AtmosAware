@@ -1,0 +1,27 @@
+{
+    "name": "AtmosAware",
+    "short_name": "AtmosAware",
+    "description": "Live weather forecasts, Doppler radar, and severe weather alerts",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#0f1923",
+    "theme_color": "#00b4d8",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/static/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["weather", "utilities"],
+    "screenshots": [],
+    "prefer_related_applications": false
+}
