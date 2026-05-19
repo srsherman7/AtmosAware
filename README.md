@@ -100,4 +100,4 @@ This project is still being actively developed. Planned features include:
 
 ## License
 
-This project is for personal/educational use. Weather data is provided by the APIs listed above under their respective terms of service.
+This project is licensed under the [MIT License](LICENSE). Weather data is provided by third-party APIs, each governed by their own terms of service — see the LICENSE file for details.
